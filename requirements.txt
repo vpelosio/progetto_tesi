@@ -1,0 +1,4 @@
+libsumo==1.25.0
+numpy==2.4.2
+PyYAML==6.0.1
+optuna==4.7.0
