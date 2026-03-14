@@ -48,6 +48,7 @@ def main():
 
     parser.add_argument("--study-name", type=str, default=None)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--storage", type=str, default=None, help="Optuna storage URL, es. sqlite:///logs/optimization_stl2/stl2_tuning.db")
     args = parser.parse_args()
 
     if args.algo == "stl2":
@@ -96,11 +97,17 @@ def main():
         save_json(baseline_cache, {"episodes": episodes, "results": baseline_results})
 
     sampler = optuna.samplers.TPESampler(seed=int(args.seed))
-    study = optuna.create_study(
-        direction="maximize",
-        study_name=args.study_name or f"{args.algo}_tuning",
-        sampler=sampler,
-    )
+
+    if args.algo == "improved_stl":
+        default_study_name = args.study_name or f"{args.algo}_phase{args.phase}_tuning"
+    else:
+        default_study_name = args.study_name or f"{args.algo}_tuning"
+
+    default_db_path = os.path.join(log_root, f"{default_study_name}.db")
+    storage_url = args.storage or f"sqlite:///{default_db_path}"
+
+    study = optuna.create_study(direction="maximize", study_name=default_study_name, sampler=sampler, storage=storage_url, load_if_exists=True)
+
 
     def objective(trial: optuna.Trial) -> float:
         params = spec.suggest_params(trial)
